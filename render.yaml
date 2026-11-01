@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: shs-collective-preview
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: >-
+      npm run db:migrate &&
+      if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
+      npm run admin:create && unset ADMIN_EMAIL ADMIN_PASSWORD;
+      fi &&
+      npm start
+    healthCheckPath: /
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shs-collective-preview-db
+          property: connectionString
+      - key: MEDIA_STORAGE
+        value: local
+      - key: SHS_SHOW_DEMO
+        value: "0"
+      - key: REQUEST_IP_SALT
+        generateValue: true
+
+databases:
+  - name: shs-collective-preview-db
+    databaseName: shs_collective
+    user: shs_collective
+    plan: free
+    region: singapore
